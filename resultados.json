@@ -1,0 +1,290 @@
+{
+    "20260611_1600_México_África do Sul": {
+        "Mandante": 3,
+        "Visitante": 1
+    },
+    "20260611_2300_Coreia do Sul_Republica Tcheca": {
+        "Mandante": 0,
+        "Visitante": 0
+    },
+    "20260612_1600_Canadá_Bósnia e Herzegovina": {
+        "Mandante": 2,
+        "Visitante": 3
+    },
+    "20260612_2200_EUA_Paraguai": {
+        "Mandante": 1,
+        "Visitante": 1
+    },
+    "20260613_1600_Catar_Suíça": {
+        "Mandante": 0,
+        "Visitante": 2
+    },
+    "20260613_1900_Brasil_Marrocos": {
+        "Mandante": 3,
+        "Visitante": 1
+    },
+    "20260613_2200_Haiti_Escócia": {
+        "Mandante": 2,
+        "Visitante": 1
+    },
+    "20260614_0100_Austrália_Turquia": {
+        "Mandante": 1,
+        "Visitante": 4
+    },
+    "20260614_1400_Alemanha_Curaçau": {
+        "Mandante": 2,
+        "Visitante": 1
+    },
+    "20260614_1700_Países Baixos_Japão": {
+        "Mandante": 3,
+        "Visitante": 2
+    },
+    "20260614_2000_Costa do Marfim_Equador": {
+        "Mandante": 1,
+        "Visitante": 1
+    },
+    "20260614_2300_Suécia_Tunísia": {
+        "Mandante": 1,
+        "Visitante": 1
+    },
+    "20260615_1300_Espanha_Cabo Verde": {
+        "Mandante": 1,
+        "Visitante": 1
+    },
+    "20260615_1600_Bélgica_Egito": {
+        "Mandante": 1,
+        "Visitante": 1
+    },
+    "20260615_1900_Arábia Saudita_Uruguai": {
+        "Mandante": 1,
+        "Visitante": 1
+    },
+    "20260615_2200_Irã_Nova Zelândia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260616_1600_França_Senegal": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260616_1900_Iraque_Noruega": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260616_2200_Argentina_Argélia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260617_0100_Áustria_Jordânia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260617_1400_Portugal_R. D. Congo": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260617_1700_Inglaterra_Croácia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260617_2000_Gana_Panamá": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260617_2300_Uzbequistão_Colômbia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260618_1300_Republica Tcheca_África do Sul": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260618_1600_Suíça_Bósnia e Herzegovina": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260618_1900_Canadá_Catar": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260618_2200_México_Coreia do Sul": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260619_1600_EUA_Austrália": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260619_1900_Escócia_Marrocos": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260619_2130_Brasil_Haiti": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260620_0000_Turquia_Paraguai": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260620_1400_Países Baixos_Suécia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260620_1700_Alemanha_Costa do Marfim": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260620_2100_Equador_Curaçau": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260621_0100_Tunísia_Japão": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260621_1300_Espanha_Arábia Saudita": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260621_1600_Bélgica_Irã": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260621_1900_Uruguai_Cabo Verde": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260621_2200_Nova Zelândia_Egito": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260622_1400_Argentina_Áustria": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260622_1800_França_Iraque": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260622_2100_Noruega_Senegal": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260623_0000_Jordânia_Argélia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260623_1400_Portugal_Uzbequistão": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260623_1700_Inglaterra_Gana": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260623_2000_Panamá_Croácia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260623_2300_Colômbia_R. D. Congo": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260624_1600_Bósnia e Herzegovina_Catar": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260624_1600_Suíça_Canadá": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260624_1900_Escócia_Brasil": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260624_1900_Marrocos_Haiti": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260624_2200_África do Sul_Coreia do Sul": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260624_2200_Republica Tcheca_México": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260625_1700_Curaçau_Costa do Marfim": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260625_1700_Equador_Alemanha": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260625_2000_Japão_Suécia": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260625_2000_Tunísia_Países Baixos": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260625_2300_Paraguai_Austrália": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260625_2300_Turquia_EUA": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260626_1600_Noruega_França": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260626_1600_Senegal_Iraque": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260626_2100_Cabo Verde_Arábia Saudita": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260626_2100_Uruguai_Espanha": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260627_0000_Egito_Irã": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260627_0000_Nova Zelândia_Bélgica": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260627_1800_Croácia_Gana": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260627_1800_Panamá_Inglaterra": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260627_2030_Colômbia_Portugal": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260627_2030_R. D. Congo_Uzbequistão": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260627_2300_Argélia_Áustria": {
+        "Mandante": null,
+        "Visitante": null
+    },
+    "20260627_2300_Jordânia_Argentina": {
+        "Mandante": null,
+        "Visitante": null
+    }
+}

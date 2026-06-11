@@ -81,7 +81,7 @@ def render_sidebar() -> tuple[Path, Path]:
         "**Pontuação:** 3 pontos para placar exato e 1 ponto para vencedor/empate correto."
     )
 
-    if st.sidebar.button("Recarregar dados", use_container_width=True):
+    if st.sidebar.button("Recarregar dados", width='stretch'):
         st.cache_data.clear()
         st.rerun()
 
@@ -133,7 +133,7 @@ def render_ranking_tab(ranking: pd.DataFrame) -> None:
     st.dataframe(
         ranking,
         hide_index=True,
-        use_container_width=True,
+        width='stretch',
     )
 
 
@@ -169,7 +169,7 @@ def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFram
     st.dataframe(
         format_prediction_table(participant_predictions),
         hide_index=True,
-        use_container_width=True,
+        width='stretch',
     )
 
 
@@ -193,13 +193,13 @@ def render_evolution_tab(evolution: pd.DataFrame, ranking: pd.DataFrame) -> None
         return
 
     filtered_evolution = evolution.loc[:, selected_participants]
-    st.line_chart(filtered_evolution, use_container_width=True)
+    st.line_chart(filtered_evolution, width='stretch')
 
     with st.expander("Ver tabela de evolução"):
         st.dataframe(
             filtered_evolution.reset_index().rename(columns={"Data": "Data/Hora"}),
             hide_index=True,
-            use_container_width=True,
+            width='stretch',
         )
 
 
@@ -216,7 +216,7 @@ def render_results_tab(results: pd.DataFrame) -> None:
     st.dataframe(
         format_results_table(filtered_results),
         hide_index=True,
-        use_container_width=True,
+        width='stretch',
     )
 
 
@@ -233,7 +233,7 @@ def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None
             editor_df,
             hide_index=True,
             num_rows="dynamic",
-            use_container_width=True,
+            width='stretch',
             column_config={
                 "Data": st.column_config.TextColumn("Data", help="Formato: dd/mm/aaaa"),
                 "Horário": st.column_config.TextColumn("Horário", help="Formato: HH:MM"),

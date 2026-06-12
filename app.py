@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
@@ -135,6 +137,7 @@ def render_ranking_tab(ranking: pd.DataFrame) -> None:
         hide_index=True,
         width='stretch',
     )
+    render_shareable_ranking(ranking)
 
 
 def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFrame) -> None:
@@ -171,6 +174,42 @@ def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFram
         hide_index=True,
         width='stretch',
     )
+    st.caption(
+        "Legenda: ✅ placar cravado | 🟡 resultado correto | ❌ erro | "
+        "⏳ aguardando resultado | ⚪ palpite incompleto."
+    )
+
+
+def render_shareable_ranking(ranking: pd.DataFrame) -> None:
+    st.divider()
+    st.subheader("Ranking para compartilhar")
+    st.caption(
+        "Imagem pronta para baixar e enviar no grupo, com todos os palpitadores."
+    )
+
+    ranking_image = create_ranking_image(ranking)
+    generated_at = datetime.now().strftime("%Y%m%d_%H%M")
+
+    st.image(ranking_image, caption="Prévia do ranking completo", width='stretch')
+    st.download_button(
+        "Baixar ranking em PNG",
+        data=ranking_image,
+        file_name=f"ranking_bolao_{generated_at}.png",
+        mime="image/png",
+        type="primary",
+        width='stretch',
+    )
+
+    ranking_text = format_ranking_text(ranking)
+    with st.expander("Ranking em texto para copiar"):
+        st.code(ranking_text)
+        st.download_button(
+            "Baixar ranking em TXT",
+            data=ranking_text.encode("utf-8"),
+            file_name=f"ranking_bolao_{generated_at}.txt",
+            mime="text/plain",
+            width='stretch',
+        )
 
 
 def render_evolution_tab(evolution: pd.DataFrame, ranking: pd.DataFrame) -> None:
@@ -272,6 +311,7 @@ def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None
 def format_prediction_table(scored_predictions: pd.DataFrame) -> pd.DataFrame:
     formatted = scored_predictions.copy()
     formatted["Data/Hora"] = formatted["Data"].dt.strftime("%d/%m/%Y %H:%M")
+    formatted["Semáforo"] = build_prediction_status(formatted)
     formatted["Palpite"] = format_score_pair(
         formatted["Placar Mandante"],
         formatted["Placar Visitante"],
@@ -289,6 +329,7 @@ def format_prediction_table(scored_predictions: pd.DataFrame) -> pd.DataFrame:
             "Palpite",
             "Visitante",
             "Resultado Real",
+            "Semáforo",
             "Ganhador",
             "Ganhador_realizado",
             "Pontos",
@@ -301,6 +342,27 @@ def format_prediction_table(scored_predictions: pd.DataFrame) -> pd.DataFrame:
             "PontosAcm": "Pontos Acumulados",
         }
     )
+
+
+def build_prediction_status(scored_predictions: pd.DataFrame) -> pd.Series:
+    status = pd.Series(
+        "⏳ Aguardando",
+        index=scored_predictions.index,
+        dtype="string",
+    )
+
+    invalid_prediction = ~scored_predictions["Palpite Valido"].fillna(False)
+    completed_game = scored_predictions["Jogo Realizado"].fillna(False)
+    exact_score = scored_predictions["Acertou Placar"].fillna(False)
+    correct_outcome = scored_predictions["Acertou Resultado"].fillna(False)
+
+    status.loc[invalid_prediction] = "⚪ Palpite incompleto"
+    status.loc[completed_game] = "❌ Erro"
+    status.loc[completed_game & correct_outcome] = "🟡 Resultado correto"
+    status.loc[completed_game & exact_score] = "✅ Placar cravado"
+    status.loc[completed_game & invalid_prediction] = "⚪ Palpite incompleto"
+
+    return status
 
 
 def format_results_table(results: pd.DataFrame) -> pd.DataFrame:
@@ -328,6 +390,171 @@ def format_score_pair(home_scores: pd.Series, away_scores: pd.Series) -> pd.Seri
     home = home_scores.astype("Int64").astype("string").fillna("—")
     away = away_scores.astype("Int64").astype("string").fillna("—")
     return home + " x " + away
+
+
+def create_ranking_image(ranking: pd.DataFrame) -> bytes:
+    from PIL import Image, ImageDraw
+
+    ranking_to_share = ranking.loc[
+        :,
+        [
+            "Posição",
+            "Palpite",
+            "Pontos",
+            "Acertos Placar",
+            "Acertos Resultado",
+        ],
+    ].copy()
+
+    width = 1080
+    margin = 40
+    title_height = 100
+    header_height = 42
+    row_height = 34
+    footer_height = 54
+    height = (
+        margin
+        + title_height
+        + header_height
+        + row_height * len(ranking_to_share)
+        + footer_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, height), "#F8FAFC")
+    draw = ImageDraw.Draw(image)
+
+    title_font = load_image_font(size=34, bold=True)
+    subtitle_font = load_image_font(size=18)
+    header_font = load_image_font(size=18, bold=True)
+    row_font = load_image_font(size=17)
+    footer_font = load_image_font(size=15)
+
+    draw.rounded_rectangle(
+        (margin, margin, width - margin, margin + title_height - 12),
+        radius=18,
+        fill="#0F172A",
+    )
+    draw.text(
+        (margin + 26, margin + 20),
+        "Ranking Bolão Copa 2026",
+        font=title_font,
+        fill="#FFFFFF",
+    )
+    draw.text(
+        (margin + 28, margin + 62),
+        f"Atualizado em {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+        font=subtitle_font,
+        fill="#CBD5E1",
+    )
+
+    columns = [
+        ("Pos.", "Posição", 82),
+        ("Palpitador", "Palpite", 480),
+        ("Pts", "Pontos", 90),
+        ("Placar", "Acertos Placar", 130),
+        ("Resultado", "Acertos Resultado", 180),
+    ]
+
+    current_y = margin + title_height
+    current_x = margin
+    draw.rectangle(
+        (margin, current_y, width - margin, current_y + header_height),
+        fill="#1E293B",
+    )
+    for label, _, column_width in columns:
+        draw.text(
+            (current_x + 12, current_y + 10),
+            label,
+            font=header_font,
+            fill="#FFFFFF",
+        )
+        current_x += column_width
+
+    current_y += header_height
+    for row_number, row in enumerate(ranking_to_share.to_dict(orient="records")):
+        row_fill = "#FFFFFF" if row_number % 2 == 0 else "#F1F5F9"
+        if int(row["Posição"]) == 1:
+            row_fill = "#FEF3C7"
+        elif int(row["Posição"]) <= 3:
+            row_fill = "#FFFBEB"
+
+        draw.rectangle(
+            (margin, current_y, width - margin, current_y + row_height),
+            fill=row_fill,
+        )
+
+        current_x = margin
+        for _, field_name, column_width in columns:
+            value = str(row[field_name])
+            if field_name == "Posição":
+                value = f"{value}º"
+            value = truncate_text(draw, value, row_font, column_width - 18)
+            draw.text(
+                (current_x + 12, current_y + 7),
+                value,
+                font=row_font,
+                fill="#0F172A",
+            )
+            current_x += column_width
+
+        current_y += row_height
+
+    draw.rectangle((margin, current_y, width - margin, current_y + 1), fill="#CBD5E1")
+    draw.text(
+        (margin, current_y + 18),
+        "Critério: 3 pontos para placar exato; 1 ponto para vencedor/empate correto.",
+        font=footer_font,
+        fill="#475569",
+    )
+
+    buffer = BytesIO()
+    image.save(buffer, format="PNG", optimize=True)
+    return buffer.getvalue()
+
+
+def load_image_font(size: int, bold: bool = False):
+    from PIL import ImageFont
+
+    font_candidates = [
+        Path("C:/Windows/Fonts/arialbd.ttf" if bold else "C:/Windows/Fonts/arial.ttf"),
+        Path("C:/Windows/Fonts/seguisb.ttf" if bold else "C:/Windows/Fonts/segoeui.ttf"),
+    ]
+    for font_path in font_candidates:
+        if not font_path.exists():
+            continue
+        try:
+            return ImageFont.truetype(str(font_path), size=size)
+        except OSError:
+            continue
+    return ImageFont.load_default()
+
+
+def truncate_text(draw, text: str, font, max_width: int) -> str:
+    if draw.textlength(text, font=font) <= max_width:
+        return text
+
+    suffix = "..."
+    while text and draw.textlength(text + suffix, font=font) > max_width:
+        text = text[:-1]
+    return text + suffix
+
+
+def format_ranking_text(ranking: pd.DataFrame) -> str:
+    generated_at = datetime.now().strftime("%d/%m/%Y %H:%M")
+    lines = [
+        "🏆 Ranking Bolão Copa 2026",
+        f"Atualizado em {generated_at}",
+        "",
+    ]
+    for row in ranking.to_dict(orient="records"):
+        lines.append(
+            f"{int(row['Posição']):>2}º - {row['Palpite']}: "
+            f"{int(row['Pontos'])} pts "
+            f"({int(row['Acertos Placar'])} placar, "
+            f"{int(row['Acertos Resultado'])} resultado)"
+        )
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":

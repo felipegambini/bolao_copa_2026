@@ -54,7 +54,7 @@ def main() -> None:
     )
 
     with ranking_tab:
-        render_ranking_tab(data.ranking)
+        render_ranking_tab(data.ranking, data.resultados)
 
     with individual_tab:
         render_individual_tab(data.palpites, data.ranking)
@@ -112,7 +112,7 @@ def load_dashboard_data(
 
 
 def render_summary_metrics(ranking: pd.DataFrame, results: pd.DataFrame) -> None:
-    completed_games = int(results["Jogo Realizado"].sum())
+    completed_games = f'{int(results["Jogo Realizado"].sum())}/72'
     pending_games = int((results["Status"] == "Pendente").sum())
     leader_points = int(ranking["Pontos"].max()) if not ranking.empty else 0
     last_completed = results.loc[results["Jogo Realizado"], "Data"].max()
@@ -130,14 +130,14 @@ def render_summary_metrics(ranking: pd.DataFrame, results: pd.DataFrame) -> None
     col_last.metric("Último jogo pontuado", last_completed_label)
 
 
-def render_ranking_tab(ranking: pd.DataFrame) -> None:
+def render_ranking_tab(ranking: pd.DataFrame, results: pd.DataFrame) -> None:
     st.subheader("Ranking de pontos por palpitador")
     st.dataframe(
         ranking,
         hide_index=True,
         width='stretch',
     )
-    render_shareable_ranking(ranking)
+    render_shareable_ranking(ranking, results)
 
 
 def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFrame) -> None:
@@ -180,14 +180,20 @@ def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFram
     )
 
 
-def render_shareable_ranking(ranking: pd.DataFrame) -> None:
+def render_shareable_ranking(ranking: pd.DataFrame, results: pd.DataFrame) -> None:
     st.divider()
     st.subheader("Ranking para compartilhar")
     st.caption(
         "Imagem pronta para baixar e enviar no grupo, com todos os palpitadores."
     )
 
-    ranking_image = create_ranking_image(ranking)
+    completed_games = int(results["Jogo Realizado"].sum())
+    total_games = len(results)
+    ranking_image = create_ranking_image(
+        ranking,
+        completed_games=completed_games,
+        total_games=total_games,
+    )
     generated_at = datetime.now().strftime("%Y%m%d_%H%M")
 
     st.image(ranking_image, caption="Prévia do ranking completo", width='stretch')
@@ -200,7 +206,11 @@ def render_shareable_ranking(ranking: pd.DataFrame) -> None:
         width='stretch',
     )
 
-    ranking_text = format_ranking_text(ranking)
+    ranking_text = format_ranking_text(
+        ranking,
+        completed_games=completed_games,
+        total_games=total_games,
+    )
     with st.expander("Ranking em texto para copiar"):
         st.code(ranking_text)
         st.download_button(
@@ -311,7 +321,7 @@ def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None
 def format_prediction_table(scored_predictions: pd.DataFrame) -> pd.DataFrame:
     formatted = scored_predictions.copy()
     formatted["Data/Hora"] = formatted["Data"].dt.strftime("%d/%m/%Y %H:%M")
-    formatted["Semáforo"] = build_prediction_status(formatted)
+    formatted["Situação"] = build_prediction_status(formatted)
     formatted["Palpite"] = format_score_pair(
         formatted["Placar Mandante"],
         formatted["Placar Visitante"],
@@ -329,7 +339,7 @@ def format_prediction_table(scored_predictions: pd.DataFrame) -> pd.DataFrame:
             "Palpite",
             "Visitante",
             "Resultado Real",
-            "Semáforo",
+            "Situação",
             "Ganhador",
             "Ganhador_realizado",
             "Pontos",
@@ -392,7 +402,11 @@ def format_score_pair(home_scores: pd.Series, away_scores: pd.Series) -> pd.Seri
     return home + " x " + away
 
 
-def create_ranking_image(ranking: pd.DataFrame) -> bytes:
+def create_ranking_image(
+    ranking: pd.DataFrame,
+    completed_games: int,
+    total_games: int,
+) -> bytes:
     from PIL import Image, ImageDraw
 
     ranking_to_share = ranking.loc[
@@ -406,12 +420,12 @@ def create_ranking_image(ranking: pd.DataFrame) -> bytes:
         ],
     ].copy()
 
-    width = 1080
-    margin = 40
-    title_height = 100
-    header_height = 42
-    row_height = 34
-    footer_height = 54
+    width = 1800
+    margin = 80
+    title_height = 200
+    header_height = 76
+    row_height = 58
+    footer_height = 92
     height = (
         margin
         + title_height
@@ -424,42 +438,54 @@ def create_ranking_image(ranking: pd.DataFrame) -> bytes:
     image = Image.new("RGB", (width, height), "#F8FAFC")
     draw = ImageDraw.Draw(image)
 
-    title_font = load_image_font(size=34, bold=True)
-    subtitle_font = load_image_font(size=18)
-    header_font = load_image_font(size=18, bold=True)
-    row_font = load_image_font(size=17)
-    footer_font = load_image_font(size=15)
+    title_font = load_image_font(size=66, bold=True)
+    subtitle_font = load_image_font(size=34)
+    games_counter_font = load_image_font(size=56, bold=True)
+    header_font = load_image_font(size=34, bold=True)
+    row_font = load_image_font(size=31)
+    footer_font = load_image_font(size=28)
+
+    columns = [
+        ("Pos.", "Posição", 120),
+        ("Palpitador", "Palpite", 760),
+        ("Pts", "Pontos", 140),
+        ("Placar", "Acertos Placar", 250),
+        ("Resultado", "Acertos Resultado", 360),
+    ]
+    table_width = sum(column_width for _, _, column_width in columns)
+    table_left = (width - table_width) // 2
+    table_right = table_left + table_width
 
     draw.rounded_rectangle(
-        (margin, margin, width - margin, margin + title_height - 12),
-        radius=18,
+        (table_left, margin, table_right, margin + title_height - 22),
+        radius=34,
         fill="#0F172A",
     )
     draw.text(
-        (margin + 26, margin + 20),
+        (table_left + 50, margin + 34),
         "Ranking Bolão Copa 2026",
         font=title_font,
         fill="#FFFFFF",
     )
     draw.text(
-        (margin + 28, margin + 62),
+        (table_left + 54, margin + 125),
         f"Atualizado em {datetime.now().strftime('%d/%m/%Y %H:%M')}",
         font=subtitle_font,
         fill="#CBD5E1",
     )
-
-    columns = [
-        ("Pos.", "Posição", 82),
-        ("Palpitador", "Palpite", 480),
-        ("Pts", "Pontos", 90),
-        ("Placar", "Acertos Placar", 130),
-        ("Resultado", "Acertos Resultado", 180),
-    ]
+    games_counter = f"Jogos: {completed_games}/{total_games}"
+    games_counter_width = draw.textlength(games_counter, font=games_counter_font)
+    draw.text(
+        (table_right - 54 - games_counter_width, margin + 104),
+        games_counter,
+        font=games_counter_font,
+        fill="#CBD5E1",
+    )
 
     current_y = margin + title_height
-    current_x = margin
+    current_x = table_left
     draw.rectangle(
-        (margin, current_y, width - margin, current_y + header_height),
+        (table_left, current_y, table_right, current_y + header_height),
         fill="#1E293B",
     )
     for label, _, column_width in columns:
@@ -480,18 +506,18 @@ def create_ranking_image(ranking: pd.DataFrame) -> bytes:
             row_fill = "#FFFBEB"
 
         draw.rectangle(
-            (margin, current_y, width - margin, current_y + row_height),
+            (table_left, current_y, table_right, current_y + row_height),
             fill=row_fill,
         )
 
-        current_x = margin
+        current_x = table_left
         for _, field_name, column_width in columns:
             value = str(row[field_name])
             if field_name == "Posição":
                 value = f"{value}º"
             value = truncate_text(draw, value, row_font, column_width - 18)
             draw.text(
-                (current_x + 12, current_y + 7),
+                (current_x + 12, current_y + 11),
                 value,
                 font=row_font,
                 fill="#0F172A",
@@ -500,9 +526,9 @@ def create_ranking_image(ranking: pd.DataFrame) -> bytes:
 
         current_y += row_height
 
-    draw.rectangle((margin, current_y, width - margin, current_y + 1), fill="#CBD5E1")
+    draw.rectangle((table_left, current_y, table_right, current_y + 1), fill="#CBD5E1")
     draw.text(
-        (margin, current_y + 18),
+        (table_left, current_y + 18),
         "Critério: 3 pontos para placar exato; 1 ponto para vencedor/empate correto.",
         font=footer_font,
         fill="#475569",
@@ -540,11 +566,16 @@ def truncate_text(draw, text: str, font, max_width: int) -> str:
     return text + suffix
 
 
-def format_ranking_text(ranking: pd.DataFrame) -> str:
+def format_ranking_text(
+    ranking: pd.DataFrame,
+    completed_games: int,
+    total_games: int,
+) -> str:
     generated_at = datetime.now().strftime("%d/%m/%Y %H:%M")
     lines = [
         "🏆 Ranking Bolão Copa 2026",
         f"Atualizado em {generated_at}",
+        f"Jogos: {completed_games}/{total_games}",
         "",
     ]
     for row in ranking.to_dict(orient="records"):

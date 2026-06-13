@@ -70,24 +70,24 @@ def main() -> None:
 
 
 def render_sidebar() -> tuple[Path, Path]:
-    st.sidebar.header("Arquivos")
-    excel_path = Path(
-        st.sidebar.text_input("Planilha de palpites", value=str(DEFAULT_EXCEL_PATH))
-    )
-    results_path = Path(
-        st.sidebar.text_input("JSON de resultados", value=str(DEFAULT_RESULTS_PATH))
-    )
+    # st.sidebar.header("Arquivos")
+    # excel_path = Path(
+    #     st.sidebar.text_input("Planilha de palpites", value=str(DEFAULT_EXCEL_PATH))
+    # )
+    # results_path = Path(
+    #     st.sidebar.text_input("JSON de resultados", value=str(DEFAULT_RESULTS_PATH))
+    # )
 
-    st.sidebar.divider()
-    st.sidebar.markdown(
-        "**Pontuação:** 3 pontos para placar exato e 1 ponto para vencedor/empate correto."
-    )
+    # st.sidebar.divider()
+    # st.sidebar.markdown(
+    #     "**Pontuação:** 3 pontos para placar exato e 1 ponto para vencedor/empate correto."
+    # )
 
-    if st.sidebar.button("Recarregar dados", width='stretch'):
-        st.cache_data.clear()
-        st.rerun()
+    # if st.sidebar.button("Recarregar dados", width='stretch'):
+    #     st.cache_data.clear()
+    #     st.rerun()
 
-    return excel_path, results_path
+    return DEFAULT_EXCEL_PATH, DEFAULT_RESULTS_PATH
 
 
 def get_file_signature(path: Path) -> tuple[int, int]:
@@ -135,7 +135,26 @@ def render_ranking_tab(ranking: pd.DataFrame, results: pd.DataFrame) -> None:
     st.dataframe(
         ranking,
         hide_index=True,
-        width='stretch',
+        width='content',
+        column_config={
+            'Posição': st.column_config.NumberColumn(
+                alignment='center',
+                format='%dº'
+            ),
+             'Pontos': st.column_config.NumberColumn(alignment='center'),
+             'Acertos Placar': st.column_config.NumberColumn(
+                alignment='center'
+            ),
+             'Acertos Resultado': st.column_config.NumberColumn(
+                alignment='center'
+            ),
+             'Jogos Pontuados': st.column_config.NumberColumn(
+                alignment='center'
+            ),
+             'Jogos Realizados': st.column_config.NumberColumn(
+                alignment='center'
+            )
+        }
     )
     render_shareable_ranking(ranking, results)
 
@@ -153,7 +172,7 @@ def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFram
 
     status_filter = st.radio(
         "Filtro",
-        ["Todos", "Jogos realizados", "Jogos pontuados", "Palpites inválidos"],
+        ["Todos", "Jogos realizados", "Jogos pontuados"],
         horizontal=True,
     )
     if status_filter == "Jogos realizados":
@@ -164,19 +183,28 @@ def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFram
         participant_predictions = participant_predictions.loc[
             participant_predictions["Pontos"] > 0, :
         ]
-    elif status_filter == "Palpites inválidos":
-        participant_predictions = participant_predictions.loc[
-            ~participant_predictions["Palpite Valido"], :
-        ]
 
     st.dataframe(
         format_prediction_table(participant_predictions),
         hide_index=True,
-        width='stretch',
+        width='content',
+        column_config={
+            'Data/Hora': st.column_config.DatetimeColumn(
+                alignment='center',
+                format='DD/MM/YYYY HH:mm'
+            ),
+            'Palpite': st.column_config.TextColumn(alignment='center'),
+            'Resultado Real': st.column_config.TextColumn(alignment='center'),
+            'Situação': st.column_config.TextColumn(alignment='center'),
+            'Resultado Palpite': st.column_config.TextColumn(alignment='center'),
+            'Resultado Oficial': st.column_config.TextColumn(alignment='center'),
+            'Pontos': st.column_config.NumberColumn(alignment='center'),
+            'Pontos Acumulados': st.column_config.NumberColumn(alignment='center'),
+        }
     )
     st.caption(
         "Legenda: ✅ placar cravado | 🟡 resultado correto | ❌ erro | "
-        "⏳ aguardando resultado | ⚪ palpite incompleto."
+        "⏳ aguardando resultado"
     )
 
 
@@ -242,13 +270,19 @@ def render_evolution_tab(evolution: pd.DataFrame, ranking: pd.DataFrame) -> None
         return
 
     filtered_evolution = evolution.loc[:, selected_participants]
-    st.line_chart(filtered_evolution, width='stretch')
+    st.line_chart(filtered_evolution, width='stretch', height=800)
 
     with st.expander("Ver tabela de evolução"):
         st.dataframe(
             filtered_evolution.reset_index().rename(columns={"Data": "Data/Hora"}),
             hide_index=True,
-            width='stretch',
+            width='content',
+            column_config={
+                'Data/Hora': st.column_config.DatetimeColumn(
+                    alignment='center',
+                    format='DD/MM/YYYY HH:mm'
+                )
+            }
         )
 
 
@@ -265,7 +299,16 @@ def render_results_tab(results: pd.DataFrame) -> None:
     st.dataframe(
         format_results_table(filtered_results),
         hide_index=True,
-        width='stretch',
+        width='content',
+        column_config={
+            'Data/Hora': st.column_config.DatetimeColumn(
+                alignment='center',
+                format='DD/MM/YYYY HH:mm'
+            ),
+            'Resultado': st.column_config.TextColumn(alignment='center'),
+            'Vencedor': st.column_config.TextColumn(alignment='center'),
+            'Status': st.column_config.TextColumn(alignment='center'),
+        }
     )
 
 
@@ -282,10 +325,18 @@ def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None
             editor_df,
             hide_index=True,
             num_rows="dynamic",
-            width='stretch',
+            width='content',
             column_config={
-                "Data": st.column_config.TextColumn("Data", help="Formato: dd/mm/aaaa"),
-                "Horário": st.column_config.TextColumn("Horário", help="Formato: HH:MM"),
+                "Data": st.column_config.TextColumn(
+                    "Data",
+                    help="Formato: dd/mm/aaaa",
+                    alignment='center'
+                ),
+                "Horário": st.column_config.TextColumn(
+                    "Horário",
+                    help="Formato: HH:MM",
+                    alignment='center'
+                ),
                 "Mandante": st.column_config.TextColumn("Mandante"),
                 "Visitante": st.column_config.TextColumn("Visitante"),
                 "Placar Mandante": st.column_config.NumberColumn(
@@ -293,12 +344,14 @@ def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None
                     min_value=0,
                     step=1,
                     format="%d",
+                    alignment='center'
                 ),
                 "Placar Visitante": st.column_config.NumberColumn(
                     "Placar Visitante",
                     min_value=0,
                     step=1,
                     format="%d",
+                    alignment='center'
                 ),
             },
         )
@@ -356,21 +409,18 @@ def format_prediction_table(scored_predictions: pd.DataFrame) -> pd.DataFrame:
 
 def build_prediction_status(scored_predictions: pd.DataFrame) -> pd.Series:
     status = pd.Series(
-        "⏳ Aguardando",
+        "⏳",
         index=scored_predictions.index,
         dtype="string",
     )
 
-    invalid_prediction = ~scored_predictions["Palpite Valido"].fillna(False)
     completed_game = scored_predictions["Jogo Realizado"].fillna(False)
     exact_score = scored_predictions["Acertou Placar"].fillna(False)
     correct_outcome = scored_predictions["Acertou Resultado"].fillna(False)
 
-    status.loc[invalid_prediction] = "⚪ Palpite incompleto"
-    status.loc[completed_game] = "❌ Erro"
-    status.loc[completed_game & correct_outcome] = "🟡 Resultado correto"
-    status.loc[completed_game & exact_score] = "✅ Placar cravado"
-    status.loc[completed_game & invalid_prediction] = "⚪ Palpite incompleto"
+    status.loc[completed_game] = "❌"
+    status.loc[completed_game & correct_outcome] = "🟡"
+    status.loc[completed_game & exact_score] = "✅"
 
     return status
 

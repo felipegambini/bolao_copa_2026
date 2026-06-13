@@ -443,7 +443,6 @@ def build_ranking(scored_predictions: pd.DataFrame) -> pd.DataFrame:
                 "Acertos Resultado": ("Acertou Resultado", "sum"),
                 "Jogos Pontuados": ("Pontos", lambda values: int((values > 0).sum())),
                 "Jogos Realizados": ("Jogo Realizado", "sum"),
-                "Palpites Inválidos": ("Palpite Valido", lambda values: int((~values).sum())),
             },
         )
         .reset_index()
@@ -470,7 +469,6 @@ def build_ranking(scored_predictions: pd.DataFrame) -> pd.DataFrame:
                 "Acertos Resultado",
                 "Jogos Pontuados",
                 "Jogos Realizados",
-                "Palpites Inválidos",
             ],
         ]
         .reset_index(drop=True)

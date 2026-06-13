@@ -69,7 +69,7 @@ def main() -> None:
         render_individual_tab(data.palpites, data.ranking)
 
     with game_summary_tab:
-        render_game_summary_tab(data.palpites, data.resultados)
+        render_game_summary_tab(data.palpites, data.resultados, data.ranking)
 
     with evolution_tab:
         render_evolution_tab(data.evolucao, data.ranking)
@@ -346,7 +346,7 @@ def render_results_tab(results: pd.DataFrame) -> None:
 
 
 def render_game_summary_tab(
-    palpites: pd.DataFrame, results: pd.DataFrame
+    palpites: pd.DataFrame, results: pd.DataFrame, ranking: pd.DataFrame
 ) -> None:
     st.subheader("Resumo de palpites por jogo")
     st.caption(
@@ -421,7 +421,8 @@ def render_game_summary_tab(
     st.markdown("### Palpites individuais")
     with st.expander("Ver todos os palpites por palpitador para este jogo"):
         player_table = format_game_predictions_table(
-            palpites.loc[palpites["key"] == selected_game_key, :].copy()
+            palpites.loc[palpites["key"] == selected_game_key, :].copy(),
+            ranking,
         )
         if player_table.empty:
             st.info("Nenhum palpite encontrado para este jogo.")
@@ -431,6 +432,9 @@ def render_game_summary_tab(
                 hide_index=True,
                 width="content",
                 column_config={
+                    "Posição": st.column_config.NumberColumn(
+                        alignment="center", format="%dº"
+                    ),
                     "Palpite": st.column_config.TextColumn(alignment="center"),
                     "Placar": st.column_config.TextColumn(alignment="center"),
                     "Resultado Real": st.column_config.TextColumn(
@@ -443,6 +447,39 @@ def render_game_summary_tab(
                     ),
                 },
             )
+
+    st.markdown("### Imagens para compartilhar")
+    if not summary_table.empty:
+        distribution_image = create_game_distribution_image(
+            summary_table, home_team, away_team, selected_game
+        )
+        st.image(
+            distribution_image,
+            caption="Distribuição de palpites",
+            width="stretch",
+        )
+        st.download_button(
+            "Baixar distribuição em PNG",
+            data=distribution_image,
+            file_name=f"distribuicao_palpite_{selected_game_key}.png",
+            mime="image/png",
+            width="stretch",
+        )
+
+    if not player_table.empty:
+        predictions_image = create_game_predictions_image(
+            player_table, selected_game
+        )
+        st.image(
+            predictions_image, caption="Palpites individuais", width="stretch"
+        )
+        st.download_button(
+            "Baixar palpites individuais em PNG",
+            data=predictions_image,
+            file_name=f"palpites_individuais_{selected_game_key}.png",
+            mime="image/png",
+            width="stretch",
+        )
 
 
 def build_game_summary_table(
@@ -478,11 +515,12 @@ def build_game_summary_table(
 
 
 def format_game_predictions_table(
-    game_predictions: pd.DataFrame,
+    game_predictions: pd.DataFrame, ranking: pd.DataFrame | None = None
 ) -> pd.DataFrame:
     if game_predictions.empty:
         return pd.DataFrame(
             columns=[
+                "Posição",
                 "Palpite",
                 "Placar",
                 "Resultado Real",
@@ -493,6 +531,14 @@ def format_game_predictions_table(
         )
 
     formatted = game_predictions.copy()
+    # adicionar posição quando ranking disponível
+    if ranking is not None and not ranking.empty:
+        pos = ranking.loc[:, ["Palpite", "Posição"]].copy()
+        formatted = formatted.merge(
+            pos, on="Palpite", how="left", validate="m:1"
+        )
+    else:
+        formatted["Posição"] = pd.NA
     formatted["Placar"] = format_score_pair(
         formatted["Placar Mandante"],
         formatted["Placar Visitante"],
@@ -507,6 +553,7 @@ def format_game_predictions_table(
         formatted.loc[
             :,
             [
+                "Posição",
                 "Palpite",
                 "Placar",
                 "Resultado Real",
@@ -517,7 +564,9 @@ def format_game_predictions_table(
         ]
         .rename(columns={"PontosAcm": "Pontos Acumulados"})
         .sort_values(
-            ["Pontos", "Palpite"], ascending=[False, True], kind="stable"
+            ["Posição", "Pontos", "Palpite"],
+            ascending=[True, False, True],
+            kind="stable",
         )
         .reset_index(drop=True)
     )
@@ -621,16 +670,45 @@ def format_prediction_table(scored_predictions: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_prediction_status(scored_predictions: pd.DataFrame) -> pd.Series:
-    status = pd.Series(
-        "⏳",
-        index=scored_predictions.index,
-        dtype="string",
-    )
+    # Garantir colunas necessárias; tentar inferir se ausentes
+    df = scored_predictions
+    status = pd.Series("⏳", index=df.index, dtype="string")
 
-    completed_game = scored_predictions["Jogo Realizado"].fillna(False)
-    exact_score = scored_predictions["Acertou Placar"].fillna(False)
-    correct_outcome = scored_predictions["Acertou Resultado"].fillna(False)
+    # Inferir se o jogo foi realizado
+    if "Jogo Realizado" in df.columns:
+        completed_game = df["Jogo Realizado"].fillna(False)
+    else:
+        completed_game = df.get("Placar Mandante_realizado")
+        completed_game = (
+            completed_game.notna()
+            if completed_game is not None
+            else pd.Series(False, index=df.index)
+        )
 
+    # Inferir acertos a partir das colunas existentes
+    if "Acertou Placar" in df.columns:
+        exact_score = df["Acertou Placar"].fillna(False)
+    else:
+        exact_score = df.get("Placar Mandante").eq(
+            df.get("Placar Mandante_realizado")
+        ) & df.get("Placar Visitante").eq(df.get("Placar Visitante_realizado"))
+        exact_score = (
+            exact_score.fillna(False)
+            if hasattr(exact_score, "fillna")
+            else pd.Series(False, index=df.index)
+        )
+
+    if "Acertou Resultado" in df.columns:
+        correct_outcome = df["Acertou Resultado"].fillna(False)
+    else:
+        correct_outcome = df.get("Ganhador").eq(df.get("Ganhador_realizado"))
+        correct_outcome = (
+            correct_outcome.fillna(False)
+            if hasattr(correct_outcome, "fillna")
+            else pd.Series(False, index=df.index)
+        )
+
+    # Prioridade: placar exato > resultado correto > erro
     status.loc[completed_game] = "❌"
     status.loc[completed_game & correct_outcome] = "🟡"
     status.loc[completed_game & exact_score] = "✅"
@@ -843,6 +921,255 @@ def truncate_text(draw, text: str, font, max_width: int) -> str:
     while text and draw.textlength(text + suffix, font=font) > max_width:
         text = text[:-1]
     return text + suffix
+
+
+def create_game_distribution_image(
+    summary: pd.DataFrame,
+    home_team: str,
+    away_team: str,
+    selected_game: pd.Series,
+) -> bytes:
+    from PIL import Image, ImageDraw
+
+    width = 1400
+    margin = 40
+    title_height = 120
+    header_height = 56
+    row_height = 46
+    footer_height = 64
+    height = (
+        margin
+        + title_height
+        + header_height
+        + row_height * max(1, len(summary))
+        + footer_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, height), "#F8FAFC")
+    draw = ImageDraw.Draw(image)
+
+    title_font = load_image_font(size=40, bold=True)
+    subtitle_font = load_image_font(size=20)
+    header_font = load_image_font(size=22, bold=True)
+    row_font = load_image_font(size=20)
+    footer_font = load_image_font(size=18)
+
+    draw.rounded_rectangle(
+        (margin, margin, width - margin, margin + title_height - 10),
+        radius=16,
+        fill="#0F172A",
+    )
+    draw.text(
+        (margin + 16, margin + 12),
+        "Distribuição de palpites",
+        font=title_font,
+        fill="#FFFFFF",
+    )
+    draw.text(
+        (margin + 16, margin + 60),
+        f"{selected_game['Mandante']} x {selected_game['Visitante']} — {selected_game['Data'].strftime('%d/%m %H:%M')}",
+        font=subtitle_font,
+        fill="#CBD5E1",
+    )
+
+    current_y = margin + title_height
+    current_x = margin
+    column_defs = [
+        ("Resultado", 220),
+        (home_team, 120),
+        (away_team, 120),
+        ("Qtd palpites", 120),
+    ]
+
+    draw.rectangle(
+        (margin, current_y, width - margin, current_y + header_height),
+        fill="#1E293B",
+    )
+    for label, col_width in column_defs:
+        draw.text(
+            (current_x + 8, current_y + 12),
+            label,
+            font=header_font,
+            fill="#FFFFFF",
+        )
+        current_x += col_width
+
+    current_y += header_height
+    for row in summary.to_dict(orient="records"):
+        row_fill = (
+            "#FFFFFF"
+            if (
+                summary.index.get_loc(
+                    summary[
+                        summary["Qtd palpites"] == row["Qtd palpites"]
+                    ].index[0]
+                )
+                % 2
+                == 0
+            )
+            else "#F1F5F9"
+        )
+        draw.rectangle(
+            (margin, current_y, width - margin, current_y + row_height),
+            fill=row_fill,
+        )
+        current_x = margin
+        values = [
+            str(row.get("Ganhador", "—")),
+            str(int(row.get(home_team)))
+            if pd.notna(row.get(home_team))
+            else "—",
+            str(int(row.get(away_team)))
+            if pd.notna(row.get(away_team))
+            else "—",
+            str(int(row.get("Qtd palpites", 0))),
+        ]
+        for value, (_, col_width) in zip(values, column_defs):
+            draw.text(
+                (current_x + 8, current_y + 10),
+                truncate_text(draw, value, row_font, col_width - 16),
+                font=row_font,
+                fill="#0F172A",
+            )
+            current_x += col_width
+        current_y += row_height
+
+    draw.text(
+        (margin, current_y + 12),
+        "Distribuição de palpites por placar e vencedor/empate.",
+        font=footer_font,
+        fill="#475569",
+    )
+
+    buffer = BytesIO()
+    image.save(buffer, format="PNG", optimize=True)
+    return buffer.getvalue()
+
+
+def create_game_predictions_image(
+    player_table: pd.DataFrame, selected_game: pd.Series
+) -> bytes:
+    from PIL import Image, ImageDraw
+
+    width = 1400
+    margin = 40
+    title_height = 120
+    header_height = 56
+    row_height = 54
+    footer_height = 64
+    height = (
+        margin
+        + title_height
+        + header_height
+        + row_height * max(1, len(player_table))
+        + footer_height
+        + margin
+    )
+
+    image = Image.new("RGB", (width, height), "#F8FAFC")
+    draw = ImageDraw.Draw(image)
+
+    title_font = load_image_font(size=40, bold=True)
+    subtitle_font = load_image_font(size=20)
+    header_font = load_image_font(size=22, bold=True)
+    row_font = load_image_font(size=20)
+    footer_font = load_image_font(size=18)
+
+    draw.rounded_rectangle(
+        (margin, margin, width - margin, margin + title_height - 10),
+        radius=16,
+        fill="#0F172A",
+    )
+    draw.text(
+        (margin + 16, margin + 12),
+        "Palpites individuais",
+        font=title_font,
+        fill="#FFFFFF",
+    )
+    draw.text(
+        (margin + 16, margin + 60),
+        f"{selected_game['Mandante']} x {selected_game['Visitante']} — {selected_game['Data'].strftime('%d/%m %H:%M')}",
+        font=subtitle_font,
+        fill="#CBD5E1",
+    )
+
+    current_y = margin + title_height
+    current_x = margin
+    column_defs = [
+        ("Posição", 100),
+        ("Palpite", 500),
+        ("Placar", 160),
+        ("Resultado", 220),
+        ("Pontos", 120),
+        ("Situação", 120),
+    ]
+
+    draw.rectangle(
+        (margin, current_y, width - margin, current_y + header_height),
+        fill="#1E293B",
+    )
+    for label, col_width in column_defs:
+        draw.text(
+            (current_x + 8, current_y + 12),
+            label,
+            font=header_font,
+            fill="#FFFFFF",
+        )
+        current_x += col_width
+
+    current_y += header_height
+    for row in player_table.to_dict(orient="records"):
+        row_fill = (
+            "#FFFFFF"
+            if (
+                player_table.index.get_loc(
+                    player_table[
+                        player_table["Palpite"] == row["Palpite"]
+                    ].index[0]
+                )
+                % 2
+                == 0
+            )
+            else "#F1F5F9"
+        )
+        draw.rectangle(
+            (margin, current_y, width - margin, current_y + row_height),
+            fill=row_fill,
+        )
+        current_x = margin
+        values = [
+            str(int(row.get("Posição")))
+            if pd.notna(row.get("Posição"))
+            else "—",
+            row.get("Palpite", "—"),
+            row.get("Placar", "—"),
+            row.get("Resultado Real", "—"),
+            str(int(row.get("Pontos", 0)))
+            if pd.notna(row.get("Pontos"))
+            else "0",
+            row.get("Situação", "—"),
+        ]
+        for value, (_, col_width) in zip(values, column_defs):
+            draw.text(
+                (current_x + 8, current_y + 12),
+                truncate_text(draw, str(value), row_font, col_width - 16),
+                font=row_font,
+                fill="#0F172A",
+            )
+            current_x += col_width
+        current_y += row_height
+
+    draw.text(
+        (margin, current_y + 12),
+        "Posição atual de cada palpitador e resultados do jogo selecionado.",
+        font=footer_font,
+        fill="#475569",
+    )
+
+    buffer = BytesIO()
+    image.save(buffer, format="PNG", optimize=True)
+    return buffer.getvalue()
 
 
 def format_ranking_text(

@@ -16,7 +16,6 @@ from palpites import (
     save_results_from_editor,
 )
 
-
 st.set_page_config(
     page_title="Placar do Bolão Copa 2026",
     page_icon="🏆",
@@ -26,7 +25,9 @@ st.set_page_config(
 
 def main() -> None:
     st.title("🏆 Placar do Bolão Copa 2026")
-    st.caption("Ranking, palpites individuais, evolução de pontos e atualização de resultados.")
+    st.caption(
+        "Ranking, palpites individuais, evolução de pontos e atualização de resultados."
+    )
 
     excel_path, results_path = render_sidebar()
 
@@ -43,10 +44,18 @@ def main() -> None:
 
     render_summary_metrics(data.ranking, data.resultados)
 
-    ranking_tab, individual_tab, evolution_tab, results_tab, editor_tab = st.tabs(
+    (
+        ranking_tab,
+        individual_tab,
+        game_summary_tab,
+        evolution_tab,
+        results_tab,
+        editor_tab,
+    ) = st.tabs(
         [
             "Ranking",
             "Palpite individual",
+            "Resumo por jogo",
             "Evolução",
             "Resultados",
             "Atualizar resultados",
@@ -58,6 +67,9 @@ def main() -> None:
 
     with individual_tab:
         render_individual_tab(data.palpites, data.ranking)
+
+    with game_summary_tab:
+        render_game_summary_tab(data.palpites, data.resultados)
 
     with evolution_tab:
         render_evolution_tab(data.evolucao, data.ranking)
@@ -111,8 +123,10 @@ def load_dashboard_data(
     )
 
 
-def render_summary_metrics(ranking: pd.DataFrame, results: pd.DataFrame) -> None:
-    completed_games = f'{int(results["Jogo Realizado"].sum())}/72'
+def render_summary_metrics(
+    ranking: pd.DataFrame, results: pd.DataFrame
+) -> None:
+    completed_games = f"{int(results['Jogo Realizado'].sum())}/72"
     pending_games = int((results["Status"] == "Pendente").sum())
     leader_points = int(ranking["Pontos"].max()) if not ranking.empty else 0
     last_completed = results.loc[results["Jogo Realizado"], "Data"].max()
@@ -122,8 +136,12 @@ def render_summary_metrics(ranking: pd.DataFrame, results: pd.DataFrame) -> None
         else "Sem jogos realizados"
     )
 
-    col_participants, col_completed, col_pending, col_leader, col_last = st.columns(5)
-    col_participants.metric("Participantes", f"{ranking['Palpite'].nunique():,}".replace(",", "."))
+    col_participants, col_completed, col_pending, col_leader, col_last = (
+        st.columns(5)
+    )
+    col_participants.metric(
+        "Participantes", f"{ranking['Palpite'].nunique():,}".replace(",", ".")
+    )
     col_completed.metric("Jogos realizados", completed_games)
     col_pending.metric("Jogos pendentes", pending_games)
     col_leader.metric("Pontos do líder", leader_points)
@@ -135,31 +153,30 @@ def render_ranking_tab(ranking: pd.DataFrame, results: pd.DataFrame) -> None:
     st.dataframe(
         ranking,
         hide_index=True,
-        width='content',
+        width="content",
         column_config={
-            'Posição': st.column_config.NumberColumn(
-                alignment='center',
-                format='%dº'
+            "Posição": st.column_config.NumberColumn(
+                alignment="center", format="%dº"
             ),
-             'Pontos': st.column_config.NumberColumn(alignment='center'),
-             'Acertos Placar': st.column_config.NumberColumn(
-                alignment='center'
+            "Pontos": st.column_config.NumberColumn(alignment="center"),
+            "Acertos Placar": st.column_config.NumberColumn(alignment="center"),
+            "Acertos Resultado": st.column_config.NumberColumn(
+                alignment="center"
             ),
-             'Acertos Resultado': st.column_config.NumberColumn(
-                alignment='center'
+            "Jogos Pontuados": st.column_config.NumberColumn(
+                alignment="center"
             ),
-             'Jogos Pontuados': st.column_config.NumberColumn(
-                alignment='center'
+            "Jogos Realizados": st.column_config.NumberColumn(
+                alignment="center"
             ),
-             'Jogos Realizados': st.column_config.NumberColumn(
-                alignment='center'
-            )
-        }
+        },
     )
     render_shareable_ranking(ranking, results)
 
 
-def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFrame) -> None:
+def render_individual_tab(
+    scored_predictions: pd.DataFrame, ranking: pd.DataFrame
+) -> None:
     st.subheader("Consulta de palpite individual")
 
     participants = ranking["Palpite"].tolist()
@@ -187,20 +204,25 @@ def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFram
     st.dataframe(
         format_prediction_table(participant_predictions),
         hide_index=True,
-        width='content',
+        width="content",
         column_config={
-            'Data/Hora': st.column_config.DatetimeColumn(
-                alignment='center',
-                format='DD/MM/YYYY HH:mm'
+            "Data/Hora": st.column_config.DatetimeColumn(
+                alignment="center", format="DD/MM/YYYY HH:mm"
             ),
-            'Palpite': st.column_config.TextColumn(alignment='center'),
-            'Resultado Real': st.column_config.TextColumn(alignment='center'),
-            'Situação': st.column_config.TextColumn(alignment='center'),
-            'Resultado Palpite': st.column_config.TextColumn(alignment='center'),
-            'Resultado Oficial': st.column_config.TextColumn(alignment='center'),
-            'Pontos': st.column_config.NumberColumn(alignment='center'),
-            'Pontos Acumulados': st.column_config.NumberColumn(alignment='center'),
-        }
+            "Palpite": st.column_config.TextColumn(alignment="center"),
+            "Resultado Real": st.column_config.TextColumn(alignment="center"),
+            "Situação": st.column_config.TextColumn(alignment="center"),
+            "Resultado Palpite": st.column_config.TextColumn(
+                alignment="center"
+            ),
+            "Resultado Oficial": st.column_config.TextColumn(
+                alignment="center"
+            ),
+            "Pontos": st.column_config.NumberColumn(alignment="center"),
+            "Pontos Acumulados": st.column_config.NumberColumn(
+                alignment="center"
+            ),
+        },
     )
     st.caption(
         "Legenda: ✅ placar cravado | 🟡 resultado correto | ❌ erro | "
@@ -208,7 +230,9 @@ def render_individual_tab(scored_predictions: pd.DataFrame, ranking: pd.DataFram
     )
 
 
-def render_shareable_ranking(ranking: pd.DataFrame, results: pd.DataFrame) -> None:
+def render_shareable_ranking(
+    ranking: pd.DataFrame, results: pd.DataFrame
+) -> None:
     st.divider()
     st.subheader("Ranking para compartilhar")
     st.caption(
@@ -224,14 +248,16 @@ def render_shareable_ranking(ranking: pd.DataFrame, results: pd.DataFrame) -> No
     )
     generated_at = datetime.now().strftime("%Y%m%d_%H%M")
 
-    st.image(ranking_image, caption="Prévia do ranking completo", width='stretch')
+    st.image(
+        ranking_image, caption="Prévia do ranking completo", width="stretch"
+    )
     st.download_button(
         "Baixar ranking em PNG",
         data=ranking_image,
         file_name=f"ranking_bolao_{generated_at}.png",
         mime="image/png",
         type="primary",
-        width='stretch',
+        width="stretch",
     )
 
     ranking_text = format_ranking_text(
@@ -246,11 +272,13 @@ def render_shareable_ranking(ranking: pd.DataFrame, results: pd.DataFrame) -> No
             data=ranking_text.encode("utf-8"),
             file_name=f"ranking_bolao_{generated_at}.txt",
             mime="text/plain",
-            width='stretch',
+            width="stretch",
         )
 
 
-def render_evolution_tab(evolution: pd.DataFrame, ranking: pd.DataFrame) -> None:
+def render_evolution_tab(
+    evolution: pd.DataFrame, ranking: pd.DataFrame
+) -> None:
     st.subheader("Evolução dos pontos acumulados por dia e hora")
 
     if evolution.empty:
@@ -270,49 +298,234 @@ def render_evolution_tab(evolution: pd.DataFrame, ranking: pd.DataFrame) -> None
         return
 
     filtered_evolution = evolution.loc[:, selected_participants]
-    st.line_chart(filtered_evolution, width='stretch', height=800)
+    st.line_chart(filtered_evolution, width="stretch", height=800)
 
     with st.expander("Ver tabela de evolução"):
         st.dataframe(
-            filtered_evolution.reset_index().rename(columns={"Data": "Data/Hora"}),
+            filtered_evolution.reset_index().rename(
+                columns={"Data": "Data/Hora"}
+            ),
             hide_index=True,
-            width='content',
+            width="content",
             column_config={
-                'Data/Hora': st.column_config.DatetimeColumn(
-                    alignment='center',
-                    format='DD/MM/YYYY HH:mm'
+                "Data/Hora": st.column_config.DatetimeColumn(
+                    alignment="center", format="DD/MM/YYYY HH:mm"
                 )
-            }
+            },
         )
 
 
 def render_results_tab(results: pd.DataFrame) -> None:
     st.subheader("Resultados dos jogos")
 
-    status_options = ["Todos", *sorted(results["Status"].dropna().unique().tolist())]
+    status_options = [
+        "Todos",
+        *sorted(results["Status"].dropna().unique().tolist()),
+    ]
     selected_status = st.selectbox("Status", status_options)
 
     filtered_results = results.copy()
     if selected_status != "Todos":
-        filtered_results = filtered_results.loc[filtered_results["Status"] == selected_status, :]
+        filtered_results = filtered_results.loc[
+            filtered_results["Status"] == selected_status, :
+        ]
 
     st.dataframe(
         format_results_table(filtered_results),
         hide_index=True,
-        width='content',
+        width="content",
         column_config={
-            'Data/Hora': st.column_config.DatetimeColumn(
-                alignment='center',
-                format='DD/MM/YYYY HH:mm'
+            "Data/Hora": st.column_config.DatetimeColumn(
+                alignment="center", format="DD/MM/YYYY HH:mm"
             ),
-            'Resultado': st.column_config.TextColumn(alignment='center'),
-            'Vencedor': st.column_config.TextColumn(alignment='center'),
-            'Status': st.column_config.TextColumn(alignment='center'),
+            "Resultado": st.column_config.TextColumn(alignment="center"),
+            "Vencedor": st.column_config.TextColumn(alignment="center"),
+            "Status": st.column_config.TextColumn(alignment="center"),
+        },
+    )
+
+
+def render_game_summary_tab(
+    palpites: pd.DataFrame, results: pd.DataFrame
+) -> None:
+    st.subheader("Resumo de palpites por jogo")
+    st.caption(
+        "Veja o próximo jogo pendente por padrão e filtre todos os palpites por jogo selecionado."
+    )
+
+    if results.empty:
+        st.info("Ainda não há jogos cadastrados.")
+        return
+
+    game_labels = {
+        row["key"]: (
+            f"{row['Data'].strftime('%d/%m %H:%M')} — {row['Mandante']} x {row['Visitante']} "
+            f"({row['Status']})"
+        )
+        for _, row in results.iterrows()
+    }
+
+    game_keys = list(results["key"])
+    pending_keys = results.loc[results["Status"] == "Pendente", "key"].tolist()
+    default_key = pending_keys[0] if pending_keys else game_keys[0]
+    default_index = game_keys.index(default_key)
+
+    selected_game_key = st.selectbox(
+        "Selecione o jogo",
+        options=game_keys,
+        format_func=lambda key: game_labels[key],
+        index=default_index,
+    )
+
+    selected_game = results.loc[results["key"] == selected_game_key].iloc[0]
+    home_team = selected_game["Mandante"]
+    away_team = selected_game["Visitante"]
+    result_score = (
+        format_score_pair(
+            pd.Series([selected_game["Placar Mandante"]]),
+            pd.Series([selected_game["Placar Visitante"]]),
+        ).iat[0]
+        if selected_game["Jogo Realizado"]
+        else "—"
+    )
+
+    col_game, col_datetime, col_status, col_result = st.columns(4)
+    col_game.metric("Jogo", f"{home_team} x {away_team}")
+    col_datetime.metric(
+        "Data/Hora", selected_game["Data"].strftime("%d/%m %H:%M")
+    )
+    col_status.metric("Status", selected_game["Status"])
+    col_result.metric("Resultado oficial", result_score)
+
+    st.markdown("### Distribuição de palpites")
+    summary_table = build_game_summary_table(
+        palpites, selected_game_key, home_team, away_team
+    )
+    if summary_table.empty:
+        st.info("Ainda não há palpites registrados para este jogo.")
+    else:
+        st.dataframe(
+            summary_table,
+            hide_index=True,
+            width="content",
+            column_config={
+                home_team: st.column_config.NumberColumn(alignment="center"),
+                away_team: st.column_config.NumberColumn(alignment="center"),
+                "Qtd palpites": st.column_config.NumberColumn(
+                    alignment="center"
+                ),
+                "Ganhador": st.column_config.TextColumn(alignment="center"),
+            },
+        )
+
+    st.markdown("### Palpites individuais")
+    with st.expander("Ver todos os palpites por palpitador para este jogo"):
+        player_table = format_game_predictions_table(
+            palpites.loc[palpites["key"] == selected_game_key, :].copy()
+        )
+        if player_table.empty:
+            st.info("Nenhum palpite encontrado para este jogo.")
+        else:
+            st.dataframe(
+                player_table,
+                hide_index=True,
+                width="content",
+                column_config={
+                    "Palpite": st.column_config.TextColumn(alignment="center"),
+                    "Placar": st.column_config.TextColumn(alignment="center"),
+                    "Resultado Real": st.column_config.TextColumn(
+                        alignment="center"
+                    ),
+                    "Situação": st.column_config.TextColumn(alignment="center"),
+                    "Pontos": st.column_config.NumberColumn(alignment="center"),
+                    "Pontos Acumulados": st.column_config.NumberColumn(
+                        alignment="center"
+                    ),
+                },
+            )
+
+
+def build_game_summary_table(
+    palpites: pd.DataFrame,
+    game_key: str,
+    home_team: str,
+    away_team: str,
+) -> pd.DataFrame:
+    game_predictions = palpites.loc[palpites["key"] == game_key].copy()
+    if game_predictions.empty:
+        return pd.DataFrame(
+            columns=["Ganhador", home_team, away_team, "Qtd palpites"]
+        )
+
+    summary = (
+        game_predictions.groupby(
+            ["Ganhador", "Placar Mandante", "Placar Visitante"], observed=True
+        )
+        .size()
+        .reset_index(name="Qtd palpites")
+        .sort_values(
+            ["Qtd palpites", "Ganhador", "Placar Mandante", "Placar Visitante"],
+            ascending=[False, True, True, True],
+        )
+    )
+    summary["Ganhador"] = summary["Ganhador"].fillna("—")
+    return summary.rename(
+        columns={
+            "Placar Mandante": home_team,
+            "Placar Visitante": away_team,
         }
     )
 
 
-def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None:
+def format_game_predictions_table(
+    game_predictions: pd.DataFrame,
+) -> pd.DataFrame:
+    if game_predictions.empty:
+        return pd.DataFrame(
+            columns=[
+                "Palpite",
+                "Placar",
+                "Resultado Real",
+                "Situação",
+                "Pontos",
+                "Pontos Acumulados",
+            ]
+        )
+
+    formatted = game_predictions.copy()
+    formatted["Placar"] = format_score_pair(
+        formatted["Placar Mandante"],
+        formatted["Placar Visitante"],
+    )
+    formatted["Resultado Real"] = format_score_pair(
+        formatted["Placar Mandante_realizado"],
+        formatted["Placar Visitante_realizado"],
+    )
+    formatted["Situação"] = build_prediction_status(formatted)
+
+    return (
+        formatted.loc[
+            :,
+            [
+                "Palpite",
+                "Placar",
+                "Resultado Real",
+                "Situação",
+                "Pontos",
+                "PontosAcm",
+            ],
+        ]
+        .rename(columns={"PontosAcm": "Pontos Acumulados"})
+        .sort_values(
+            ["Pontos", "Palpite"], ascending=[False, True], kind="stable"
+        )
+        .reset_index(drop=True)
+    )
+
+
+def render_results_editor_tab(
+    results: pd.DataFrame, results_path: Path
+) -> None:
     st.subheader("Modificar ou incluir resultados")
     st.info(
         "Novos jogos só impactam a pontuação se também existirem nas abas de palpites da planilha "
@@ -325,17 +538,13 @@ def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None
             editor_df,
             hide_index=True,
             num_rows="dynamic",
-            width='content',
+            width="content",
             column_config={
                 "Data": st.column_config.TextColumn(
-                    "Data",
-                    help="Formato: dd/mm/aaaa",
-                    alignment='center'
+                    "Data", help="Formato: dd/mm/aaaa", alignment="center"
                 ),
                 "Horário": st.column_config.TextColumn(
-                    "Horário",
-                    help="Formato: HH:MM",
-                    alignment='center'
+                    "Horário", help="Formato: HH:MM", alignment="center"
                 ),
                 "Mandante": st.column_config.TextColumn("Mandante"),
                 "Visitante": st.column_config.TextColumn("Visitante"),
@@ -344,18 +553,20 @@ def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None
                     min_value=0,
                     step=1,
                     format="%d",
-                    alignment='center'
+                    alignment="center",
                 ),
                 "Placar Visitante": st.column_config.NumberColumn(
                     "Placar Visitante",
                     min_value=0,
                     step=1,
                     format="%d",
-                    alignment='center'
+                    alignment="center",
                 ),
             },
         )
-        submitted = st.form_submit_button("Salvar resultados e recalcular", type="primary")
+        submitted = st.form_submit_button(
+            "Salvar resultados e recalcular", type="primary"
+        )
 
     if not submitted:
         return
@@ -367,7 +578,9 @@ def render_results_editor_tab(results: pd.DataFrame, results_path: Path) -> None
         return
 
     st.cache_data.clear()
-    st.success(f"Resultados salvos em `{results_path}`. Recalculando pontuação...")
+    st.success(
+        f"Resultados salvos em `{results_path}`. Recalculando pontuação..."
+    )
     st.rerun()
 
 
@@ -446,7 +659,9 @@ def format_results_table(results: pd.DataFrame) -> pd.DataFrame:
     ].rename(columns={"Ganhador": "Vencedor"})
 
 
-def format_score_pair(home_scores: pd.Series, away_scores: pd.Series) -> pd.Series:
+def format_score_pair(
+    home_scores: pd.Series, away_scores: pd.Series
+) -> pd.Series:
     home = home_scores.astype("Int64").astype("string").fillna("—")
     away = away_scores.astype("Int64").astype("string").fillna("—")
     return home + " x " + away
@@ -524,7 +739,9 @@ def create_ranking_image(
         fill="#CBD5E1",
     )
     games_counter = f"Jogos: {completed_games}/{total_games}"
-    games_counter_width = draw.textlength(games_counter, font=games_counter_font)
+    games_counter_width = draw.textlength(
+        games_counter, font=games_counter_font
+    )
     draw.text(
         (table_right - 54 - games_counter_width, margin + 104),
         games_counter,
@@ -548,7 +765,9 @@ def create_ranking_image(
         current_x += column_width
 
     current_y += header_height
-    for row_number, row in enumerate(ranking_to_share.to_dict(orient="records")):
+    for row_number, row in enumerate(
+        ranking_to_share.to_dict(orient="records")
+    ):
         row_fill = "#FFFFFF" if row_number % 2 == 0 else "#F1F5F9"
         if int(row["Posição"]) == 1:
             row_fill = "#FEF3C7"
@@ -576,7 +795,9 @@ def create_ranking_image(
 
         current_y += row_height
 
-    draw.rectangle((table_left, current_y, table_right, current_y + 1), fill="#CBD5E1")
+    draw.rectangle(
+        (table_left, current_y, table_right, current_y + 1), fill="#CBD5E1"
+    )
     draw.text(
         (table_left, current_y + 18),
         "Critério: 3 pontos para placar exato; 1 ponto para vencedor/empate correto.",
@@ -593,8 +814,16 @@ def load_image_font(size: int, bold: bool = False):
     from PIL import ImageFont
 
     font_candidates = [
-        Path("C:/Windows/Fonts/arialbd.ttf" if bold else "C:/Windows/Fonts/arial.ttf"),
-        Path("C:/Windows/Fonts/seguisb.ttf" if bold else "C:/Windows/Fonts/segoeui.ttf"),
+        Path(
+            "C:/Windows/Fonts/arialbd.ttf"
+            if bold
+            else "C:/Windows/Fonts/arial.ttf"
+        ),
+        Path(
+            "C:/Windows/Fonts/seguisb.ttf"
+            if bold
+            else "C:/Windows/Fonts/segoeui.ttf"
+        ),
     ]
     for font_path in font_candidates:
         if not font_path.exists():

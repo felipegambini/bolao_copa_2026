@@ -48,12 +48,12 @@
         "Visitante": 1
     },
     "20260615_1300_Espanha_Cabo Verde": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 0,
+        "Visitante": 0
     },
     "20260615_1600_Bélgica_Egito": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 1,
+        "Visitante": 1
     },
     "20260615_1900_Arábia Saudita_Uruguai": {
         "Mandante": null,

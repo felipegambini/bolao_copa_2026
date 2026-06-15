@@ -789,8 +789,8 @@ def create_ranking_image(
     footer_font = load_image_font(size=35)
 
     columns = [
-        ("Pos.", "Posição", 120),
-        ("Palpitador", "Palpite", 760),
+        ("Pos.", "Posição", 130),
+        ("Palpitador", "Palpite", 750),
         ("Pts", "Pontos", 140),
         ("Placar", "Acertos Placar", 250),
         ("Resultado", "Acertos Resultado", 360),
@@ -849,8 +849,10 @@ def create_ranking_image(
         row_fill = "#FFFFFF" if row_number % 2 == 0 else "#F1F5F9"
         if int(row["Posição"]) == 1:
             row_fill = "#FEF3C7"
-        elif int(row["Posição"]) <= 3:
-            row_fill = "#FFFBEB"
+        elif int(row["Posição"]) == 2:
+            row_fill = "#E2E8F0"
+        elif int(row["Posição"]) == 3:
+            row_fill = "#FED7AA"
 
         draw.rectangle(
             (table_left, current_y, table_right, current_y + row_height),
@@ -861,13 +863,25 @@ def create_ranking_image(
         for _, field_name, column_width in columns:
             value = str(row[field_name])
             if field_name == "Posição":
-                value = f"{value}º"
+                emoji_position = {
+                    '1': '🥇',
+                    '2': '🥈',
+                    '3': '🥉',
+                }
+                value = emoji_position.get(value, f"{value:>2}º")
+            if field_name == "Pontos":
+                value = f"{value:>2}"
+            if field_name == "Acertos Placar":
+                value = f"{value:>5}"
+            if field_name == "Acertos Resultado":
+                value = f"{value:>9}"
             value = truncate_text(draw, value, row_font, column_width - 18)
             draw.text(
                 (current_x + 12, current_y + 11),
                 value,
                 font=row_font,
                 fill="#0F172A",
+                embedded_color=True
             )
             current_x += column_width
 
@@ -892,6 +906,11 @@ def load_image_font(size: int, bold: bool = False):
     from PIL import ImageFont
 
     font_candidates = [
+        Path(
+            "C:/Windows/Fonts/seguiemj.ttf"
+            if bold
+            else "C:/Windows/Fonts/seguiemj.ttf"
+        ),
         Path(
             "C:/Windows/Fonts/arialbd.ttf"
             if bold

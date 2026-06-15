@@ -3,4 +3,4 @@ pandas
 numpy
 Pillow
 openpyxl
-calamine
+python-calamine

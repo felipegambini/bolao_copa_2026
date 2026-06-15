@@ -931,7 +931,7 @@ def create_game_distribution_image(
 ) -> bytes:
     from PIL import Image, ImageDraw
 
-    width = 1400
+    width = 800
     margin = 40
     title_height = 120
     header_height = 56
@@ -977,8 +977,8 @@ def create_game_distribution_image(
     current_x = margin
     column_defs = [
         ("Resultado", 220),
-        (home_team, 120),
-        (away_team, 120),
+        (home_team, 170),
+        (away_team, 170),
         ("Qtd palpites", 120),
     ]
 
@@ -996,18 +996,11 @@ def create_game_distribution_image(
         current_x += col_width
 
     current_y += header_height
-    for row in summary.to_dict(orient="records"):
+    for k, row in enumerate(summary.to_dict(orient="records")):
         row_fill = (
             "#FFFFFF"
-            if (
-                summary.index.get_loc(
-                    summary[
-                        summary["Qtd palpites"] == row["Qtd palpites"]
-                    ].index[0]
-                )
-                % 2
+            if k % 2
                 == 0
-            )
             else "#F1F5F9"
         )
         draw.rectangle(

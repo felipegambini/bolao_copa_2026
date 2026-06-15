@@ -16,28 +16,28 @@
         "Visitante": 1
     },
     "20260613_1600_Catar_Suíça": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 1,
+        "Visitante": 1
     },
     "20260613_1900_Brasil_Marrocos": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 1,
+        "Visitante": 1
     },
     "20260613_2200_Haiti_Escócia": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 0,
+        "Visitante": 1
     },
     "20260614_0100_Austrália_Turquia": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 2,
+        "Visitante": 0
     },
     "20260614_1400_Alemanha_Curaçau": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 7,
+        "Visitante": 1
     },
     "20260614_1700_Países Baixos_Japão": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 2,
+        "Visitante": 2
     },
     "20260614_2000_Costa do Marfim_Equador": {
         "Mandante": null,

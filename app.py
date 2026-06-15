@@ -767,7 +767,7 @@ def create_ranking_image(
     margin = 80
     title_height = 200
     header_height = 76
-    row_height = 58
+    row_height = 70
     footer_height = 92
     height = (
         margin
@@ -781,12 +781,12 @@ def create_ranking_image(
     image = Image.new("RGB", (width, height), "#F8FAFC")
     draw = ImageDraw.Draw(image)
 
-    title_font = load_image_font(size=66, bold=True)
-    subtitle_font = load_image_font(size=34)
-    games_counter_font = load_image_font(size=56, bold=True)
-    header_font = load_image_font(size=34, bold=True)
-    row_font = load_image_font(size=31)
-    footer_font = load_image_font(size=28)
+    title_font = load_image_font(size=70, bold=True)
+    subtitle_font = load_image_font(size=40)
+    games_counter_font = load_image_font(size=60, bold=True)
+    header_font = load_image_font(size=50, bold=True)
+    row_font = load_image_font(size=50)
+    footer_font = load_image_font(size=35)
 
     columns = [
         ("Pos.", "Posição", 120),

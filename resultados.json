@@ -40,8 +40,8 @@
         "Visitante": 2
     },
     "20260614_2000_Costa do Marfim_Equador": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 1,
+        "Visitante": 0
     },
     "20260614_2300_Suécia_Tunísia": {
         "Mandante": null,

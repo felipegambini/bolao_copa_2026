@@ -969,10 +969,10 @@ def create_game_distribution_image(
     draw = ImageDraw.Draw(image)
 
     title_font = load_image_font(size=40, bold=True)
-    subtitle_font = load_image_font(size=20)
-    header_font = load_image_font(size=22, bold=True)
-    row_font = load_image_font(size=20)
-    footer_font = load_image_font(size=18)
+    subtitle_font = load_image_font(size=25)
+    header_font = load_image_font(size=25, bold=True)
+    row_font = load_image_font(size=30)
+    footer_font = load_image_font(size=20)
 
     draw.rounded_rectangle(
         (margin, margin, width - margin, margin + title_height - 10),
@@ -1082,11 +1082,11 @@ def create_game_predictions_image(
     image = Image.new("RGB", (width, height), "#F8FAFC")
     draw = ImageDraw.Draw(image)
 
-    title_font = load_image_font(size=40, bold=True)
-    subtitle_font = load_image_font(size=20)
-    header_font = load_image_font(size=22, bold=True)
-    row_font = load_image_font(size=20)
-    footer_font = load_image_font(size=18)
+    title_font = load_image_font(size=50, bold=True)
+    subtitle_font = load_image_font(size=30)
+    header_font = load_image_font(size=40, bold=True)
+    row_font = load_image_font(size=40)
+    footer_font = load_image_font(size=30)
 
     draw.rounded_rectangle(
         (margin, margin, width - margin, margin + title_height - 10),
@@ -1109,11 +1109,11 @@ def create_game_predictions_image(
     current_y = margin + title_height
     current_x = margin
     column_defs = [
-        ("Posição", 100),
+        ("Pos.", 100),
         ("Palpite", 500),
         ("Placar", 160),
         ("Resultado", 220),
-        ("Pontos", 120),
+        ("Pts", 120),
         ("Situação", 120),
     ]
 
@@ -1168,6 +1168,7 @@ def create_game_predictions_image(
                 truncate_text(draw, str(value), row_font, col_width - 16),
                 font=row_font,
                 fill="#0F172A",
+                embedded_color=True
             )
             current_x += col_width
         current_y += row_height

@@ -80,12 +80,12 @@
         "Visitante": 1
     },
     "20260617_1400_Portugal_R. D. Congo": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 1,
+        "Visitante": 1
     },
     "20260617_1700_Inglaterra_Croácia": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 4,
+        "Visitante": 2
     },
     "20260617_2000_Gana_Panamá": {
         "Mandante": null,

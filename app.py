@@ -1157,7 +1157,7 @@ def create_game_predictions_image(
             row.get("Palpite", "—"),
             row.get("Placar", "—"),
             row.get("Resultado Real", "—"),
-            str(int(row.get("Pontos", 0)))
+            ('+' if str(int(row.get("Pontos", 0))) != '0' else ' ') + str(int(row.get("Pontos", 0)))
             if pd.notna(row.get("Pontos"))
             else "0",
             row.get("Situação", "—"),

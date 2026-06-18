@@ -92,16 +92,16 @@
         "Visitante": 0
     },
     "20260617_2300_Uzbequistão_Colômbia": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 1,
+        "Visitante": 3
     },
     "20260618_1300_Republica Tcheca_África do Sul": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 1,
+        "Visitante": 1
     },
     "20260618_1600_Suíça_Bósnia e Herzegovina": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 4,
+        "Visitante": 1
     },
     "20260618_1900_Canadá_Catar": {
         "Mandante": null,

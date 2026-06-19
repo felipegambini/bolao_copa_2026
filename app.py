@@ -3,11 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
-from PIL import Image, ImageDraw
-from PIL import ImageFont
 
 import pandas as pd
 import streamlit as st
+from PIL import Image, ImageDraw, ImageFont
 
 from palpites import (
     DEFAULT_EXCEL_PATH,
@@ -50,6 +49,7 @@ def main() -> None:
         ranking_tab,
         individual_tab,
         game_summary_tab,
+        result_by_game_tab,
         evolution_tab,
         results_tab,
         editor_tab,
@@ -58,6 +58,7 @@ def main() -> None:
             "Ranking",
             "Palpite individual",
             "Resumo por jogo",
+            "Resultado por jogo",
             "Evolução",
             "Resultados",
             "Atualizar resultados",
@@ -72,6 +73,9 @@ def main() -> None:
 
     with game_summary_tab:
         render_game_summary_tab(data.palpites, data.resultados, data.ranking)
+
+    with result_by_game_tab:
+        render_result_by_game_tab(data.palpites, data.ranking, data.resultados)
 
     with evolution_tab:
         render_evolution_tab(data.evolucao, data.ranking)
@@ -865,9 +869,9 @@ def create_ranking_image(
             value = str(row[field_name])
             if field_name == "Posição":
                 emoji_position = {
-                    '1': '🥇',
-                    '2': '🥈',
-                    '3': '🥉',
+                    "1": "🥇",
+                    "2": "🥈",
+                    "3": "🥉",
                 }
                 value = emoji_position.get(value, f"{value:>2}º")
             if field_name == "Pontos":
@@ -882,7 +886,7 @@ def create_ranking_image(
                 value,
                 font=row_font,
                 fill="#0F172A",
-                embedded_color=True
+                embedded_color=True,
             )
             current_x += column_width
 
@@ -906,14 +910,8 @@ def create_ranking_image(
 def load_image_font(size: int, bold: bool = False):
 
     font_candidates = [
-        Path(
-            "fonts/seguiemj.ttf"
-        ),
-        Path(
-            "fonts/seguisb.ttf"
-            if bold
-            else "fonts/segoeui.ttf"
-        ),
+        Path("fonts/seguiemj.ttf"),
+        Path("fonts/seguisb.ttf" if bold else "fonts/segoeui.ttf"),
     ]
     for font_path in font_candidates:
         if not font_path.exists():
@@ -1008,12 +1006,7 @@ def create_game_distribution_image(
 
     current_y += header_height
     for k, row in enumerate(summary.to_dict(orient="records")):
-        row_fill = (
-            "#FFFFFF"
-            if k % 2
-                == 0
-            else "#F1F5F9"
-        )
+        row_fill = "#FFFFFF" if k % 2 == 0 else "#F1F5F9"
         draw.rectangle(
             (margin, current_y, width - margin, current_y + row_height),
             fill=row_fill,
@@ -1148,7 +1141,8 @@ def create_game_predictions_image(
             row.get("Palpite", "—"),
             row.get("Placar", "—"),
             row.get("Resultado Real", "—"),
-            ('+' if str(int(row.get("Pontos", 0))) != '0' else ' ') + str(int(row.get("Pontos", 0)))
+            ("+" if str(int(row.get("Pontos", 0))) != "0" else " ")
+            + str(int(row.get("Pontos", 0)))
             if pd.notna(row.get("Pontos"))
             else "0",
             row.get("Situação", "—"),
@@ -1159,7 +1153,7 @@ def create_game_predictions_image(
                 truncate_text(draw, str(value), row_font, col_width - 16),
                 font=row_font,
                 fill="#0F172A",
-                embedded_color=True
+                embedded_color=True,
             )
             current_x += col_width
         current_y += row_height
@@ -1196,6 +1190,247 @@ def format_ranking_text(
             f"{int(row['Acertos Resultado'])} resultado)"
         )
     return "\n".join(lines)
+
+
+def render_result_by_game_tab(
+    palpites: pd.DataFrame, ranking: pd.DataFrame, results: pd.DataFrame
+) -> None:
+    """Renderiza tabela com resultado de cada pessoa em cada jogo."""
+    st.subheader("Resultado acumulado por jogo")
+    st.caption(
+        "Visualize os acertos e erros de cada palpitador em cada jogo realizado."
+    )
+
+    if palpites.empty:
+        st.info("Ainda não há palpites registrados.")
+        return
+
+    # Ordena palpitadores pelo ranking
+    ordered_participants = ranking["Palpite"].tolist()
+
+    # Cria tabela pessoa x jogo
+    result_matrix = build_result_matrix(palpites, results, ordered_participants)
+
+    # Exibe tabela com cores
+    st.markdown("### Matriz de resultados")
+    st.write(
+        "🟢 Acerto de placar | 🟡 Acerto de resultado | 🔴 Erro | ⚪ Pendente"
+    )
+
+    st.dataframe(
+        result_matrix,
+        width='stretch',
+        height=400,
+        column_config={
+            col: st.column_config.TextColumn(alignment="center")
+            for col in result_matrix.columns
+        },
+    )
+
+    # Gera imagem para compartilhar
+    st.divider()
+    st.markdown("### Imagem para compartilhar")
+
+    completed_games = int(results["Jogo Realizado"].sum())
+    total_games = len(results)
+
+    result_image = create_result_matrix_image(
+        result_matrix,
+        ranking,
+        completed_games=completed_games,
+        total_games=total_games,
+    )
+    generated_at = datetime.now().strftime("%Y%m%d_%H%M")
+
+    st.image(
+        result_image, caption="Prévia da matriz de resultados", width="stretch"
+    )
+    st.download_button(
+        "Baixar matriz em PNG",
+        data=result_image,
+        file_name=f"resultado_jogo_{generated_at}.png",
+        mime="image/png",
+        type="primary",
+        width="stretch",
+    )
+
+
+def build_result_matrix(
+    palpites: pd.DataFrame,
+    results: pd.DataFrame,
+    ordered_participants: list[str],
+) -> pd.DataFrame:
+    """Constrói matriz pessoa x jogo mostrando acertos/erros."""
+
+    # Pega apenas jogos realizados e ordena por data
+    completed_results = results.loc[results["Jogo Realizado"], :].copy()
+    if completed_results.empty:
+        return pd.DataFrame()
+
+    completed_results = completed_results.sort_values("Data")
+
+    # Cria matriz
+    matrix_data = {}
+
+    for idx, (_, game) in enumerate(completed_results.iterrows()):
+        game_key = game["key"]
+        game_label = f"{idx + 1}\n{game['Data'].strftime('%d/%m')}"
+        column_data = {}
+
+        for participant in ordered_participants:
+            participant_games = palpites.loc[
+                (palpites["Palpite"] == participant)
+                & (palpites["key"] == game_key)
+            ]
+
+            if participant_games.empty:
+                column_data[participant] = "—"
+            else:
+                game_row = participant_games.iloc[0]
+                if game_row["Acertou Placar"]:
+                    column_data[participant] = "🟢"
+                elif game_row["Acertou Resultado"]:
+                    column_data[participant] = "🟡"
+                elif game_row["Jogo Realizado"]:
+                    column_data[participant] = "🔴"
+                else:
+                    column_data[participant] = "⚪"
+
+        matrix_data[game_label] = column_data
+
+    result_df = pd.DataFrame(matrix_data)
+    result_df = result_df.reindex(ordered_participants)
+    result_df.index.name = "Palpitador"
+
+    return result_df
+
+
+def create_result_matrix_image(
+    result_matrix: pd.DataFrame,
+    ranking: pd.DataFrame,
+    completed_games: int,
+    total_games: int,
+) -> bytes:
+    """Cria imagem da matriz de resultados para compartilhar."""
+
+    # Dimensões base
+    margin = 60
+    title_height = 140
+    header_height = 80
+    row_height = 60
+    col_width = 60
+    name_col_width = 300
+
+    # Calcula dimensões da imagem
+    n_games = len(result_matrix.columns)
+    width = margin * 2 + name_col_width + col_width * n_games
+    height = (
+        margin * 2
+        + title_height
+        + header_height
+        + row_height * len(result_matrix)
+    )
+
+    image = Image.new("RGB", (width, height), "#FFFFFF")
+    draw = ImageDraw.Draw(image)
+
+    # Fontes
+    title_font = load_image_font(size=50, bold=True)
+    subtitle_font = load_image_font(size=28)
+    header_font = load_image_font(size=24, bold=True)
+    row_font = load_image_font(size=28, bold=True)
+    cell_font = load_image_font(size=32, bold=True)
+    footer_font = load_image_font(size=22)
+
+    draw.rounded_rectangle(
+        (10, margin, 60, margin + title_height - 22),
+        radius=34,
+        fill="#0F172A",
+    )
+    draw.text(
+        (margin, margin),
+        "Matriz de Resultados - Bolão Copa 2026",
+        font=title_font,
+        fill="#FFFFFF",
+    )
+    draw.text(
+        (margin, margin + 50),
+        f"Atualizado em {datetime.now().strftime('%d/%m/%Y %H:%M')} | Jogos: {completed_games}/{total_games}",
+        font=subtitle_font,
+        fill="#475569",
+    )
+
+    # Desenha header (nomes das colunas de jogos)
+    current_y = margin + title_height
+    current_x = margin + name_col_width
+
+    # Background para header
+    draw.rectangle(
+        (margin, current_y, width - margin, current_y + header_height),
+        fill="#1E293B",
+    )
+
+    # Números dos jogos
+    for col_idx, col_name in enumerate(result_matrix.columns):
+        col_x = current_x + col_idx * col_width
+        col_lines = str(col_name).split("\n")
+        for line_idx, line in enumerate(col_lines):
+            draw.text(
+                (col_x + col_width // 2 - 15, current_y + 10 + line_idx * 30),
+                line,
+                font=header_font,
+                fill="#FFFFFF",
+            )
+
+    # Desenha linhas com dados
+    current_y += header_height
+    for row_idx, (participant, row_data) in enumerate(result_matrix.iterrows()):
+        row_fill = "#F1F5F9" if row_idx % 2 == 0 else "#FFFFFF"
+
+        # Background da linha
+        draw.rectangle(
+            (margin, current_y, width - margin, current_y + row_height),
+            fill=row_fill,
+        )
+
+        # Nome do participante
+        participant_short = truncate_text(
+            draw, str(participant), row_font, name_col_width - 20
+        )
+        draw.text(
+            (margin + 10, current_y + row_height // 2 - 15),
+            participant_short,
+            font=row_font,
+            fill="#0F172A",
+            embedded_color=True
+        )
+
+        # Resultados de cada jogo
+        for col_idx, (col_name, value) in enumerate(row_data.items()):
+            col_x = margin + name_col_width + col_idx * col_width
+            # Centraliza o emoji/símbolo
+            draw.text(
+                (col_x + col_width // 2 - 15, current_y + row_height // 2 - 15),
+                str(value),
+                font=cell_font,
+                fill="#0F172A",
+                embedded_color=True
+            )
+
+        current_y += row_height
+
+    # Rodapé
+    draw.text(
+        (margin, current_y + 20),
+        "🟢 Acerto de placar (3 pts) | 🟡 Acerto de resultado (1 pt) | 🔴 Erro | ⚪ Aguardando resultado",
+        font=footer_font,
+        fill="#475569",
+        embedded_color=True
+    )
+
+    buffer = BytesIO()
+    image.save(buffer, format="PNG", optimize=True)
+    return buffer.getvalue()
 
 
 if __name__ == "__main__":

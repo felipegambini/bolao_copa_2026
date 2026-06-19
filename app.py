@@ -637,7 +637,7 @@ def render_results_editor_tab(
 
 def format_prediction_table(scored_predictions: pd.DataFrame) -> pd.DataFrame:
     formatted = scored_predictions.copy()
-    formatted["Data/Hora"] = formatted["Data"].dt.strftime("%d/%m/%Y %H:%M")
+    formatted["Data/Hora"] = formatted["Data"]
     formatted["Situação"] = build_prediction_status(formatted)
     formatted["Palpite"] = format_score_pair(
         formatted["Placar Mandante"],
@@ -720,7 +720,7 @@ def build_prediction_status(scored_predictions: pd.DataFrame) -> pd.Series:
 
 def format_results_table(results: pd.DataFrame) -> pd.DataFrame:
     formatted = results.copy()
-    formatted["Data/Hora"] = formatted["Data"].dt.strftime("%d/%m/%Y %H:%M")
+    formatted["Data/Hora"] = formatted["Data"]
     formatted["Resultado"] = format_score_pair(
         formatted["Placar Mandante"],
         formatted["Placar Visitante"],

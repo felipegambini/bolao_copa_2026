@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
+from PIL import Image, ImageDraw
+from PIL import ImageFont
 
 import pandas as pd
 import streamlit as st
@@ -750,7 +752,6 @@ def create_ranking_image(
     completed_games: int,
     total_games: int,
 ) -> bytes:
-    from PIL import Image, ImageDraw
 
     ranking_to_share = ranking.loc[
         :,
@@ -903,23 +904,15 @@ def create_ranking_image(
 
 
 def load_image_font(size: int, bold: bool = False):
-    from PIL import ImageFont
 
     font_candidates = [
         Path(
-            "C:/Windows/Fonts/seguiemj.ttf"
-            if bold
-            else "C:/Windows/Fonts/seguiemj.ttf"
+            "fonts/seguiemj.ttf"
         ),
         Path(
-            "C:/Windows/Fonts/arialbd.ttf"
+            "fonts/seguisb.ttf"
             if bold
-            else "C:/Windows/Fonts/arial.ttf"
-        ),
-        Path(
-            "C:/Windows/Fonts/seguisb.ttf"
-            if bold
-            else "C:/Windows/Fonts/segoeui.ttf"
+            else "fonts/segoeui.ttf"
         ),
     ]
     for font_path in font_candidates:
@@ -948,7 +941,6 @@ def create_game_distribution_image(
     away_team: str,
     selected_game: pd.Series,
 ) -> bytes:
-    from PIL import Image, ImageDraw
 
     width = 800
     margin = 40
@@ -1062,7 +1054,6 @@ def create_game_distribution_image(
 def create_game_predictions_image(
     player_table: pd.DataFrame, selected_game: pd.Series
 ) -> bytes:
-    from PIL import Image, ImageDraw
 
     width = 1400
     margin = 40

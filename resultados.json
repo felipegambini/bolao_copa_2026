@@ -112,16 +112,16 @@
         "Visitante": 0
     },
     "20260619_1600_EUA_Austrália": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 2,
+        "Visitante": 0
     },
     "20260619_1900_Escócia_Marrocos": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 0,
+        "Visitante": 1
     },
     "20260619_2130_Brasil_Haiti": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 3,
+        "Visitante": 0
     },
     "20260620_0000_Turquia_Paraguai": {
         "Mandante": null,

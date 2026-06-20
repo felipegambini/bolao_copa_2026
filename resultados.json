@@ -124,12 +124,12 @@
         "Visitante": 0
     },
     "20260620_0000_Turquia_Paraguai": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 0,
+        "Visitante": 1
     },
     "20260620_1400_Países Baixos_Suécia": {
-        "Mandante": null,
-        "Visitante": null
+        "Mandante": 5,
+        "Visitante": 1
     },
     "20260620_1700_Alemanha_Costa do Marfim": {
         "Mandante": null,

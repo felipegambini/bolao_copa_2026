@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -248,7 +248,7 @@ def render_shareable_ranking(
         completed_games=completed_games,
         total_games=total_games,
     )
-    generated_at = datetime.now().strftime("%Y%m%d_%H%M")
+    generated_at = datetime_now().strftime("%Y%m%d_%H%M")
 
     st.image(
         ranking_image, caption="Prévia do ranking completo", width="stretch"
@@ -813,7 +813,7 @@ def create_ranking_image(
     )
     draw.text(
         (table_left + 54, margin + 125),
-        f"Atualizado em {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+        f"Atualizado em {datetime_now().strftime('%d/%m/%Y %H:%M')}",
         font=subtitle_font,
         fill="#CBD5E1",
     )
@@ -1181,7 +1181,7 @@ def format_ranking_text(
     completed_games: int,
     total_games: int,
 ) -> str:
-    generated_at = datetime.now().strftime("%d/%m/%Y %H:%M")
+    generated_at = datetime_now().strftime("%d/%m/%Y %H:%M")
     lines = [
         "🏆 Ranking Bolão Copa 2026",
         f"Atualizado em {generated_at}",
@@ -1197,6 +1197,10 @@ def format_ranking_text(
         )
     return "\n".join(lines)
 
+
+def datetime_now():
+    new_utc = datetime.now(timezone.utc) - timedelta(hours=3)
+    return new_utc
 
 if __name__ == "__main__":
     main()
